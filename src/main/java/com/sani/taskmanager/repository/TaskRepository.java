@@ -7,8 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.sani.taskmanager.model.Task;
 import com.sani.taskmanager.model.TaskPriority;
 import com.sani.taskmanager.model.TaskStatus;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
     Page<Task> findByPriority (TaskPriority priority, Pageable pageable);
     Page<Task> findByStatus (TaskStatus status, Pageable pageable);

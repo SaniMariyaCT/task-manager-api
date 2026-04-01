@@ -1,5 +1,6 @@
 package com.sani.taskmanager.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.sani.taskmanager.dto.BulkTaskResponse;
@@ -11,7 +12,9 @@ public interface TaskService {
 
     TaskResponse createTask(TaskRequest request);
     List<TaskResponse> getAllTasks();
-    PaginatedResponse<TaskResponse> getTasks(int page, int size, String sortBy, String direction, String priority, String status);
+    PaginatedResponse<TaskResponse> getTasks(int page, int size, String sortBy
+        , String direction, String priority, String status
+        , LocalDate dueBefore, LocalDate dueAfter, String search);
     TaskResponse updateTask(Long id, TaskRequest request);
     BulkTaskResponse createAllTasks(List<TaskRequest> requests);
     void deleteTask(Long id);

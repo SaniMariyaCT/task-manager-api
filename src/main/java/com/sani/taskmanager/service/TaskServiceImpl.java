@@ -1,5 +1,6 @@
 package com.sani.taskmanager.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.sani.taskmanager.dto.BulkTaskResponse;
@@ -22,6 +24,7 @@ import com.sani.taskmanager.model.Task;
 import com.sani.taskmanager.model.TaskPriority;
 import com.sani.taskmanager.model.TaskStatus;
 import com.sani.taskmanager.repository.TaskRepository;
+import com.sani.taskmanager.specification.TaskSpecification;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -53,25 +56,22 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public PaginatedResponse<TaskResponse> getTasks(int page, int size, String sortBy, String direction, String priority, String status) {
+    public PaginatedResponse<TaskResponse> getTasks(int page, int size, String sortBy, 
+            String direction, String priority, String status, 
+            LocalDate dueBefore, LocalDate dueAfter, String search) {
 
     logger.info("Fetching tasks | page: {} size: {} sortBy: {} direction: {}", page, size, sortBy, direction);
     Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
     Pageable pageable = PageRequest.of(page, size, sort);
     Page<Task> taskPage;
-    if (priority != null && status != null) {
-        taskPage = repository.findByPriorityAndStatus(TaskPriority.valueOf(priority.toUpperCase()),
-                TaskStatus.valueOf(status.toUpperCase()), pageable);
-    } else if (priority != null) {
-        taskPage = repository.findByPriority(TaskPriority.valueOf(priority.toUpperCase()), pageable);
 
-    } else if (status != null) {
-        taskPage = repository.findByStatus(TaskStatus.valueOf(status.toUpperCase()), pageable);
-
-    } else {
-        taskPage = repository.findAll(pageable);
-    }
-
+    Specification<Task> spec = Specification
+                                .where(TaskSpecification.hasPriority(priority))
+                                .and(TaskSpecification.hasStatus(status))
+                                .and(TaskSpecification.dueBefore(dueBefore))
+                                .and(TaskSpecification.dueAfter(dueAfter))
+                                .and(TaskSpecification.containsText(search));
+    taskPage = repository.findAll(spec, pageable);
     List<TaskResponse> responses = taskPage.getContent().stream().map(TaskMapper::toResponse).toList();    
 
     PaginatedResponse<TaskResponse> result = new PaginatedResponse<>();
