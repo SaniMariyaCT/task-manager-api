@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,6 @@ public class TaskController {
 
     private final TaskService service;
     private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
-
     public TaskController(TaskService service) {
         this.service = service;
     }
@@ -63,21 +63,21 @@ public class TaskController {
 
 
     @PutMapping("/{id}")
-    public TaskResponse UpdateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
+    public TaskResponse updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
         return service.updateTask(id, request);
     }
 
     @PostMapping("/bulk")
-    public BulkTaskResponse createAllTasks(@Valid @RequestBody List<TaskRequest> requests) {
+    public BulkTaskResponse createAllTasks(@RequestBody List<TaskRequest> requests) {
         logger.info("POST /tasks/bulk called");
         return service.createAllTasks(requests);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteTask(@PathVariable Long id) {
-        service.deleteTask(id);
-        return "Task deleted successfully";
-    }
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    service.deleteTask(id);
+    return ResponseEntity.noContent().build();
+}
 
     @GetMapping("/{id}")
     public TaskResponse getTaskById(@PathVariable Long id) {
