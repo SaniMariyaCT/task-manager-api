@@ -10,36 +10,61 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
-    private final String SECRET = "mysecretkeymysecretkeymysecretkey"; //min 32 chars
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
+    private final String SECRET =
+            "mysecretkeymysecretkeymysecretkey";
+
+    private final Key key =
+            Keys.hmacShaKeyFor(SECRET.getBytes());
+
+    // Generate JWT Token
     public String generateToken(String username) {
+
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))  // 1 hour
+                .setExpiration(
+                        new Date(System.currentTimeMillis()
+                                + 1000 * 60 * 60)
+                )
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    // Extract username from token
     public String extractUserName(String token) {
-        return getClaims(token).getSubject();
+
+        return extractClaims(token).getSubject();
     }
 
-    public boolean validateToken(String token, String username) {
-        return extractUserName(token).equals(username) && !isExpired(token);
+    // Validate token
+    public boolean validateToken(
+            String token,
+            String username
+    ) {
+
+        final String extractedUsername =
+                extractUserName(token);
+
+        return extractedUsername.equals(username)
+                && !isTokenExpired(token);
     }
 
-    private boolean isExpired(String token) {
-        return getClaims(token).getExpiration().before(new Date());
+    // Check expiration
+    private boolean isTokenExpired(String token) {
+
+        return extractClaims(token)
+                .getExpiration()
+                .before(new Date());
     }
 
-    private Claims getClaims(String token) {
+    // Extract all claims
+    public Claims extractClaims(String token) {
+
         return Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
-
 }

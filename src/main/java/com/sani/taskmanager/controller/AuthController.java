@@ -2,7 +2,11 @@ package com.sani.taskmanager.controller;
 
 import com.sani.taskmanager.dto.LoginRequest;
 import com.sani.taskmanager.dto.LoginResponse;
+import com.sani.taskmanager.model.User;
+import com.sani.taskmanager.repository.UserRepository;
 import com.sani.taskmanager.security.JwtUtil;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -10,23 +14,68 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(JwtUtil jwtUtil) 
-    {
+    public AuthController(
+            JwtUtil jwtUtil,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @PostMapping("/login")
-    public LoginResponse login (@RequestBody LoginRequest request) {
-                
-        // TEMP: hardcoded user (we'll improve later)
-        if ("admin".equals(request.getUsername()) &&
-            "password".equals(request.getPassword())) {
+    // REGISTER
+    @PostMapping("/register")
+    public String register(
+            @RequestBody LoginRequest request
+    ) {
 
-            String token = jwtUtil.generateToken(request.getUsername());
-            return new LoginResponse(token);
+        User user = new User();
+
+        user.setUsername(request.getUsername());
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getPassword()
+                )
+        );
+
+        userRepository.save(user);
+
+        return "User registered successfully";
+    }
+
+    // LOGIN
+    @PostMapping("/login")
+    public LoginResponse login(
+            @RequestBody LoginRequest request
+    ) {
+
+        User user = userRepository
+                .findByUsername(request.getUsername())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        request.getPassword(),
+                        user.getPassword()
+                );
+
+        if (!passwordMatches) {
+            throw new RuntimeException(
+                    "Invalid password"
+            );
         }
 
-        throw new RuntimeException("Invalid credentials");
+        String token =
+                jwtUtil.generateToken(
+                        user.getUsername()
+                );
+
+        return new LoginResponse(token);
     }
 }
